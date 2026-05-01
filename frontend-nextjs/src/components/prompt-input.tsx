@@ -1,14 +1,32 @@
 import { handleSubmitPrompt } from "./hooks/handle-submit-prompt"
 import { Context } from "@/context/global-state"
 import { useContext, useState } from "react"
+// import { writeFile } from 'node:fs/promises';
 
 export const ImagePromptBox = () => {
-    const { prompt, setPrompt } = useContext(Context);
-    const { fullPrompt, setFullPrompt } = useContext(Context);
-    const { samplingSteps, setSamplingSteps } = useContext(Context);
-    const { abortController, setAbortController } = useContext(Context);
+    const { 
+        prompt,
+        setPrompt,
+        fullPrompt,
+        setFullPrompt,
+        samplingSteps,
+        setSamplingSteps,
+        imageWidth,
+        setImageWidth,
+        imageHeight,
+        setImageHeight,
+        webSocket,
+        imageProgress,
+        setImageProgress,
+        abortController,
+        setAbortController,
+        selectedImage,
+        setSelectedImage,
+        gallery,
+        setGallery
+    } = useContext(Context);
+
     const [ loading, setLoading ] = useState(false);
-    const [ generatedImage, setGeneratedImage ] = useState(null);
     const [ error, setError ] = useState(null);
 
     const handleGenerate = async () => {
@@ -19,11 +37,16 @@ export const ImagePromptBox = () => {
         setAbortController(newAbortController)
 
         try {
-            const result = await handleSubmitPrompt(prompt, samplingSteps, newAbortController.signal);
-            setGeneratedImage(result.image);
+            const result = await handleSubmitPrompt(prompt, samplingSteps, imageWidth, imageHeight, newAbortController.signal, webSocket);
+            setSelectedImage(result.image);
+            setGallery(prev => [result.image, ...prev].slice(0, 5));
+            // writeFile(`${fullPrompt}.jpg`, result.image); // we are going to save it at the backend instead
         } catch (err) {
             setError("Failed to generate image. Please try again.");
-            console.error(err);
+            console.log("teetsack1"); 
+            console.error(err); // TypeError: Cannot read properties of null (reading 'image')
+            console.log(error); // "null"
+            console.log("teetsack2"); 
         } finally {
             setLoading(false);
         }
@@ -32,12 +55,13 @@ export const ImagePromptBox = () => {
     const handleCancelImage = () => {
         if (abortController) {
             abortController.abort() // sends abort signal to underlying request, which is the handleSubmitPrompt function
-            
+            setError("Image canceled")
+            setImageProgress(0);
         }
     }
 
     return (
-        <div>
+        <div className = "dark">
             <input
                 value={prompt}
                 placeholder="Enter your prompt here"
@@ -49,7 +73,8 @@ export const ImagePromptBox = () => {
             <button
                 value="Enter prompt here..."
                 onClick={() => {
-                    console.log("Button clicked!");
+                    console.log(`imageWidth: ${imageWidth} (type: ${typeof imageWidth})`);
+                    console.log(`imageHeight: ${imageHeight} (type: ${typeof imageHeight})`)
                     handleGenerate();
                 }}
                 disabled={loading || !prompt.trim()}
@@ -74,24 +99,7 @@ export const ImagePromptBox = () => {
                 <div style={{color: "red"}}>
                     Error: {error}
                 </div>
-            )}
-
-            {/* equivalent to {generatedImage ? (  <div>...</div>) : null} */}
-            {generatedImage && (
-                <div>
-                    <h3>Generated Image:</h3>
-                    <img
-                        src={generatedImage}
-                        alt="Generated"
-                        style={{maxWidth: '512px', height: 'auto'}}
-                    />
-                </div>
-            )}
-
-            <a href={generatedImage} download={`${fullPrompt}.png`}>
-                Download
-            </a>
-            
+            )}            
         </div>
     )
 }

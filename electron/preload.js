@@ -3,6 +3,7 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 // contextBridge exposes values to renderer.js script
+// the versions and 'ping' function are harmless in themselves, but they belong to the node side which the renderer.js normally doesn't have access to which contains OTHER more sensitive data
 contextBridge.exposeInMainWorld('versions', { // exposes the 'versions' global object
     node: () => process.versions.node, // function name is node, returns process.versions.node
     chrome: () => process.versions.chrome,

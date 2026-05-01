@@ -27,13 +27,15 @@ class ModelLoader:
 
     def cancel(self):
         self.abort = True
+
+    def reset(self):
+        self.abort = False
    
     def progress_callback(self, pipeline, step, timestep, callback_kwargs):
         if self.abort:
             raise Exception("Generation aborted")
 
         progress = {"step": step, "progress": step / (pipeline.num_timesteps-1)}
-        print(f"Step: {step}")
         print(f"Progress: {progress}")
 
         # # queue was created from queue = asyncio.Queue() and must be async: async queue.put(progress)
@@ -44,11 +46,15 @@ class ModelLoader:
         # loop = asyncio.get_event_loop() # older API with confusing behavior, returns current loop if exists, or creates one implicitly
         # loop.create_task(self.queue.put(progress))
 
-        # From the separate image gen thread: "Hey main loop, when you get a chance, schedule this callback queue.put(progress) in a thread-safe way"
+        # Image gen in seperate thread doesn't have its own event loop. So we grabbed the main event loop on init with self.loop BEFORE jumping into the separate thread
+        # "Hey main loop, when you get a chance, schedule this callback queue.put(progress) in a thread-safe way"
         # phone the assistant from outside the building to schedule a task
+        # call_soon_threadsafe() safely schedules a coroutine to run in the event loop from a different thread
+        print("Reached self.queue.put")
         self.loop.call_soon_threadsafe(
             asyncio.create_task, self.queue.put(progress)
         )
+        print("Finished self.queue.put")
 
         return callback_kwargs
 
@@ -96,12 +102,15 @@ class ModelLoader:
 
 
 
-    def generate_image(self, prompt, steps=15, guidance_scale=7.5):
+    def generate_image(self, prompt, steps=15, guidance_scale=7.5, height=384, width=384):
+        self.reset()
         """Generate image from prompt"""
         if self.pipeline is None:
             raise ValueError("Model not loaded. Call load_model() first.")
         
         print(f"Generating image for: {prompt}")
+        print(f"Image height model_loader: {height} (type: {type(height)})")
+        print(f"Image width model_loader: {width} (type: {type(width)})")
 
         # Manual memory cleanup
         gc.collect()
@@ -114,8 +123,8 @@ class ModelLoader:
                 prompt=prompt,
                 num_inference_steps=steps,
                 guidance_scale=guidance_scale,
-                height=384,
-                width=384,
+                height=height,
+                width=width,
                 callback_on_step_end=self.progress_callback
             )
 

@@ -4,6 +4,14 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
+    // extraResources: [
+    //   { from: '../backend-python/dist', to: 'backend-python' },
+    //   { from: '../frontend-nextjs/out', to: 'frontend-nextjs'}
+    // ]
+    extraResource: [
+        '../backend-python/dist',
+        '../frontend-nextjs/out'
+    ]
   },
   rebuildConfig: {},
   makers: [

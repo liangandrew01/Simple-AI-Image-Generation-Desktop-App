@@ -9,13 +9,19 @@ import { useContext } from "react"
 //     }
 // }
 
-export const handleSubmitPrompt = async (prompt, samplingSteps, signal) => {
+export const handleSubmitPrompt = async (prompt, samplingSteps, imageWidth, imageHeight, signal, webSocket) => {
     console.log(prompt);
-    console.log(samplingSteps)
+    console.log(samplingSteps);
+    console.log(imageWidth);
+    console.log(imageHeight);
+    console.log(0);
     console.log(JSON.stringify({
         prompt: prompt,
-        samplingSteps: samplingSteps
+        samplingSteps: samplingSteps,
+        imageWidth: imageWidth,
+        imageHeight: imageHeight,
     }))
+
 
     try {
         const response = await fetch('http://localhost:8000/generate', {
@@ -25,7 +31,9 @@ export const handleSubmitPrompt = async (prompt, samplingSteps, signal) => {
             },
             body: JSON.stringify({
                 prompt: prompt,
-                samplingSteps: samplingSteps
+                samplingSteps: samplingSteps,
+                imageHeight: imageHeight,
+                imageWidth: imageWidth,
             }),
             signal,
         });
@@ -38,9 +46,12 @@ export const handleSubmitPrompt = async (prompt, samplingSteps, signal) => {
         console.log("Backend response:", data)
         return data;
     } catch (error) {
-        if (error.name === 'AbortError') {
-            console.error('Error:', error);
-            return null;
+        if (error instanceof Error && error.name === 'AbortError') {
+            console.log("handle-submit-prompt: catch error from /fetch")
+            console.error('Error:', error); // "Error: AbortError: signal is aborted without reason at handleCancelImage"
+            // setError(error);
+            webSocket.send(JSON.stringify({ type: "abort" })) 
+            return "testi";
         } else {
             console.error('Error:', error);
             throw error;

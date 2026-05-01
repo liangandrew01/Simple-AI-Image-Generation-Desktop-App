@@ -3,6 +3,11 @@ import { useState, useContext } from "react"
 
 const imageStyles = [
     {
+        style: "",
+        modifiedPrompt: "",
+        model: ""
+    },
+    {
         style: "photorealistic",
         modifiedPrompt: " in a photorealistic style",
         model: ""
@@ -32,6 +37,7 @@ export const ImageStyleSettings = () => {
 
     return (
         <div>
+            <p>Select preset image style:</p>
             <select onChange={(e) => {
                 const selectedStyle = imageStyles.find(styleParams => styleParams.style === e.target.value);
                 setImageStyle(selectedStyle.style);
@@ -46,9 +52,9 @@ export const ImageStyleSettings = () => {
                 })}
             </select>
             <div>
-                {"imageStyle: " + imageStyle}<br />
+                {/* {"imageStyle: " + imageStyle}<br /> */}
                 {"prompt: " + prompt}<br />
-                {"fullPrompt: " + fullPrompt}<br />
+                {/* {"fullPrompt: " + fullPrompt}<br /> */}
             </div>
         </div>
 
