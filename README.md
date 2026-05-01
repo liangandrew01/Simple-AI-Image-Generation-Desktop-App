@@ -1,4 +1,4 @@
-# simple-image-generation-app
+# Simple Image Generation App
 
 Generating AI images with Stable Diffusion is difficult and involves complex technical setup. This simple desktop interface gets you setup in one-click and provides free, unlimited offline image generation.
 
